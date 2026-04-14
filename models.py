@@ -14,7 +14,6 @@ class Usuario(Base):
 
     listas = relationship("Lista", back_populates="usuario", cascade="all, delete")
     peliculas_vistas = relationship("PeliculaVista", back_populates="usuario", cascade="all, delete")
-
 class Lista(Base):
     __tablename__ = "listas"
     id = Column(Integer, primary_key=True, index=True)

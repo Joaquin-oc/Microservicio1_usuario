@@ -4,6 +4,7 @@ from database import get_db
 from models import Usuario, Lista, ListaPelicula, PeliculaVista
 from datetime import datetime
 import requests
+from para_json import UsuarioCreate, UsuarioUpdate, ListaCreate, AgregarPelicula
 import os
 
 router = APIRouter()
@@ -23,20 +24,20 @@ def get_usuario(id: int, db: Session = Depends(get_db)):
     return usuario
 
 @router.post("/usuarios")
-def crear_usuario(nombre: str, email: str, pais: str, db: Session = Depends(get_db)):
-    usuario_nuevo = Usuario(nombre=nombre, email=email, pais=pais)
+def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+    usuario_nuevo = Usuario(nombre=usuario.nombre, email=usuario.email, pais=usuario.pais)
     db.add(usuario_nuevo)
     db.commit()
     db.refresh(usuario_nuevo)
     return usuario_nuevo
 
 @router.put("/usuarios/{id}")
-def actualizar_usuario(id: int, nombre: str, email: str, pais: str, db: Session = Depends(get_db)):
+def actualizar_usuario(id: int, usuario: UsuarioUpdate, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.id == id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    usuario.nombre = nombre
-    usuario.pais = pais
+    usuario.nombre = usuario.nombre
+    usuario.pais = usuario.pais
     db.commit()
     return usuario
 
@@ -61,16 +62,17 @@ def get_todas_listas(db: Session = Depends(get_db)):
 
 @router.get("/listas/usuario/{usuario_id}")
 def get_listas_de_usuaria(usuario_id: int, db: Session = Depends(get_db)):
-    listas = db.query(Lista).filter(Lista.usuario_id == usuario_id).first()
+    listas = db.query(Lista).filter(Lista.usuario_id == usuario_id).all()
     return listas
 
 @router.post("/usuarios/{usuario_id}/listas")
-def crear_lista(usuario_id: int, nombre: str, db: Session = Depends(get_db)):
-    lista_nueva = Lista(usuario_id=usuario_id, nombre=nombre)
-    db.add(lista_nueva)
+def crear_lista(usuario_id: int, lista: ListaCreate, db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    nueva = Lista(usuario_id=usuario_id, nombre=lista.nombre)
+    db.add(nueva)
     db.commit()
-    db.refresh(lista_nueva)
-    return lista_nueva
+    db.refresh(nueva)
+    return nueva
 
 @router.delete("/listas/{id}")
 def eliminar_lista(db: Session = Depends(get_db)):
@@ -88,8 +90,8 @@ def get_peliculas_lista(lista_id: int, db: Session = Depends(get_db)):
     return peliculas
 
 @router.post("/listas/{lista_id}/agregar_pelicula")
-def añadir_pelicula(lista_id: int, pelicula_id: int, db: Session = Depends(get_db)):
-    peliculas = ListaPelicula(lista_id=lista_id, pelicula_id=pelicula_id)
+def añadir_pelicula(lista_id: int, pelicula: AgregarPelicula, db: Session = Depends(get_db)):
+    peliculas = ListaPelicula(lista_id=lista_id, pelicula_id=pelicula.pelicula_id)
     db.add(peliculas)
     db.commit()
     db.refresh(peliculas)
